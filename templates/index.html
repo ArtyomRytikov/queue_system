@@ -40,9 +40,10 @@
     <form id="queueForm" style="display:none;">
         <label for="service">Выберите услугу:</label>
         <select id="service" name="service">
-            <option value="1">Приемная комиссия</option>
-            <option value="2">Регистрация</option>
-            <option value="3">Экзамены</option>
+            <option value="1">Справка об обучении</option>
+            <option value="2">Академический отпуск</option>
+            <option value="3">Пересдача экзамена</option>
+            <option value="4">Консультация</option>
         </select>
         <br><br>
         <button type="submit" class="btn">Добавить в очередь</button>
@@ -76,7 +77,7 @@
             const password = document.getElementById('password').value;
 
             // Отправка POST-запроса на сервер для логина
-            fetch('http://127.0.0.1:5000/api/login', {
+            fetch('/api/login', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -114,7 +115,7 @@
             const reg_role = document.getElementById('reg_role').value;
 
             // Отправка POST-запроса на сервер для регистрации
-            fetch('http://127.0.0.1:5000/api/register', {
+            fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -134,7 +135,7 @@
             })
             .catch(error => {
                 console.error("Ошибка:", error);
-                alert("Произошла ошибка при регистрации.");
+                alert("Произошла ошибка при егистрации.");
             });
         });
 
@@ -151,7 +152,7 @@
             }
 
             // Отправка POST-запроса на сервер с JWT-токеном
-            fetch('http://127.0.0.1:5000/api/tickets', {
+            fetch('/api/tickets', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -161,9 +162,13 @@
                     service: service
                 })
             })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.message);  // Показать сообщение об успехе
+            .then(response => response.json().then(data => ({ ok: response.ok, data })))
+            .then(({ ok, data }) => {
+                if (!ok) {
+                    alert(data.error || "Ошибка при создании талона.");
+                    return;
+                }
+                alert(data.message || "Талон успешно создан.");
                 addTicketToQueue(data.ticket);  // Обновить таблицу с талонами
             })
             .catch(error => {

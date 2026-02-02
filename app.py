@@ -1,8 +1,9 @@
 from flask import Flask, jsonify, render_template
+from datetime import time
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import Config
-from models import db
+from models import db, Service, Window, Schedule
 
 # Импорт Blueprints
 from routes.auth import auth_bp
@@ -30,6 +31,28 @@ def create_app():
     # Создание таблиц при первом запуске
     with app.app_context():
         db.create_all()
+        if Service.query.count() == 0:
+            db.session.add_all([
+                Service(name='Справка об обучении', avg_service_time_min=5),
+                Service(name='Академический отпуск', avg_service_time_min=15),
+                Service(name='Пересдача экзамена', avg_service_time_min=10),
+                Service(name='Консультация', avg_service_time_min=20),
+            ])
+        if Window.query.count() == 0:
+            db.session.add_all([
+                Window(name='Окно 1'),
+                Window(name='Окно 2'),
+                Window(name='Окно 3'),
+            ])
+        if Schedule.query.count() == 0:
+            db.session.add_all([
+                Schedule(day_of_week=1, time_from=time(9, 0), time_to=time(17, 0)),
+                Schedule(day_of_week=2, time_from=time(9, 0), time_to=time(17, 0)),
+                Schedule(day_of_week=3, time_from=time(9, 0), time_to=time(17, 0)),
+                Schedule(day_of_week=4, time_from=time(9, 0), time_to=time(17, 0)),
+                Schedule(day_of_week=5, time_from=time(9, 0), time_to=time(16, 0)),
+            ])
+        db.session.commit()
     
     # Обработчик ошибок
     @app.errorhandler(404)

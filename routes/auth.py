@@ -6,7 +6,7 @@ from models import db, User
 # Создаем Blueprint для аутентификации
 auth_bp = Blueprint('auth', __name__)
 
-# Маршрут для логина и получения токена
+# Маршру для логина и получения токена
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()  # Получаем данные из тела запроса
@@ -28,7 +28,7 @@ def login():
     
     # Создаем JWT токен для авторизованного пользователя
     access_token = create_access_token(
-        identity=user.id,
+        identity=str(user.id),
         additional_claims={'role': user.role, 'username': user.username}
     )
     
@@ -80,7 +80,7 @@ def register():
 @auth_bp.route('/api/profile', methods=['GET'])
 @jwt_required()  # Требуется авторизация через JWT
 def profile():
-    user_id = get_jwt_identity()  # Получаем идентификатор текущего пользователя из токена
+    user_id = int(get_jwt_identity())  # Получаем идентификатор текущего пользователя из токена
     user = User.query.get(user_id)  # Ищем пользователя по ID
     
     if not user:

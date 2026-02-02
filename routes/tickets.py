@@ -11,12 +11,12 @@ tickets_bp = Blueprint('tickets', __name__)
 @tickets_bp.route('/api/tickets', methods=['POST'])
 @jwt_required()  # Требуется авторизация через JWT
 def create_ticket():
-    user_id = get_jwt_identity()
-    data = request.get_json()
+    user_id = int(get_jwt_identity())
+    data = request.get_json(silent=True) or {}
     
-    service_id = data.get('service')
+    service_id = data.get('service') or data.get('service_id')
     if not service_id:
-        return jsonify({'error': 'Требуется service'}), 400
+        return jsonify({'error': 'Требуется service или service_id'}), 400
     
     service = Service.query.get(service_id)
     if not service or not service.is_active:
@@ -37,6 +37,7 @@ def create_ticket():
     ticket.status = 'WAITING'
     
     db.session.add(ticket)
+    db.session.flush()
     
     # Логируем событие
     event = EventLog(
@@ -48,6 +49,7 @@ def create_ticket():
     db.session.commit()
     
     return jsonify({
+        'message': 'Талон создан',
         'ticket': {
             'id': ticket.id,
             'ticket_number': ticket.ticket_number,

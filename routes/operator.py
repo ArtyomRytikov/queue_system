@@ -9,7 +9,7 @@ operator_bp = Blueprint('operator', __name__)
 @operator_bp.route('/api/operator/next', methods=['POST'])
 @jwt_required()
 def call_next():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     # Проверяем роль
@@ -49,7 +49,7 @@ def call_next():
 @operator_bp.route('/api/operator/tickets/<int:ticket_id>/served', methods=['POST'])
 @jwt_required()
 def mark_served(ticket_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role not in ['OPERATOR', 'ADMIN']:
@@ -85,7 +85,7 @@ def mark_served(ticket_id):
 @operator_bp.route('/api/operator/tickets/<int:ticket_id>/no_show', methods=['POST'])
 @jwt_required()
 def mark_no_show(ticket_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role not in ['OPERATOR', 'ADMIN']:
@@ -121,7 +121,7 @@ def mark_no_show(ticket_id):
 @operator_bp.route('/api/operator/queue', methods=['GET'])
 @jwt_required()
 def get_queue():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role not in ['OPERATOR', 'ADMIN']:

@@ -7,7 +7,7 @@ admin_bp = Blueprint('admin', __name__)
 @admin_bp.route('/api/admin/services', methods=['GET'])
 @jwt_required()
 def get_services():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role != 'ADMIN':
@@ -29,7 +29,7 @@ def get_services():
 @admin_bp.route('/api/admin/services', methods=['POST'])
 @jwt_required()
 def create_service():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role != 'ADMIN':
@@ -58,7 +58,7 @@ def create_service():
 @admin_bp.route('/api/admin/services/<int:service_id>', methods=['PUT'])
 @jwt_required()
 def update_service(service_id):
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role != 'ADMIN':
@@ -92,7 +92,7 @@ def update_service(service_id):
 @admin_bp.route('/api/admin/windows', methods=['GET'])
 @jwt_required()
 def get_windows():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role != 'ADMIN':
@@ -112,7 +112,7 @@ def get_windows():
 @admin_bp.route('/api/admin/schedule', methods=['GET'])
 @jwt_required()
 def get_schedule():
-    user_id = get_jwt_identity()
+    user_id = int(get_jwt_identity())
     user = User.query.get(user_id)
     
     if user.role != 'ADMIN':
