@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Система электронной очереди</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Авторизация</h1>
+    <form id="loginForm">
+        <label for="username">Имя пользователя:</label>
+        <input type="text" id="username" name="username" required><br><br>
+
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" name="password" required><br><br>
+
+        <button type="submit" class="btn">Войти</button>
+    </form>
+
+    <h1>Регистрация</h1>
+    <form id="registerForm">
+        <label for="reg_username">Имя пользователя:</label>
+        <input type="text" id="reg_username" name="reg_username" required><br><br>
+
+        <label for="reg_password">Пароль:</label>
+        <input type="password" id="reg_password" name="reg_password" required><br><br>
+
+        <label for="reg_role">Роль:</label>
+        <select id="reg_role" name="reg_role">
+            <option value="STUDENT">Студент</option>
+            <option value="OPERATOR">Оператор</option>
+            <option value="ADMIN">Администратор</option>
+        </select><br><br>
+
+        <button type="submit" class="btn">Зарегистрироваться</button>
+    </form>
+
+    <h1>Добавить в очередь</h1>
+    <form id="queueForm" style="display:none;">
+        <label for="service">Выберите услугу:</label>
+        <select id="service" name="service">
+            <option value="1">Приемная комиссия</option>
+            <option value="2">Регистрация</option>
+            <option value="3">Экзамены</option>
+        </select>
+        <br><br>
+        <button type="submit" class="btn">Добавить в очередь</button>
+    </form>
+
+    <h2>Список ожидающих в очереди:</h2>
+    <table id="queueTable">
+        <thead>
+            <tr>
+                <th>Номер талона</th>
+                <th>Услуга</th>
+                <th>Статус</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Данные будут добавляться сюда -->
+        </tbody>
+    </table>
+
+    <script>
+        // Функция для получения токена из localStorage
+        function getToken() {
+            return localStorage.getItem("jwt_token"); // Предполагаем, что токен хранится в localStorage
+        }
+
+        // Обработчик логина
+        document.getElementById('loginForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Остановить отправку формы
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Отправка POST-запроса на сервер для логина
+            fetch('http://127.0.0.1:5000/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username, password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.access_token) {
+                    // Сохраняем токен в localStorage
+                    localStorage.setItem('jwt_token', data.access_token);
+                    console.log("Токен сохранен:", localStorage.getItem('jwt_token'));
+
+                    // Показываем форму добавления в очередь
+                    document.getElementById('loginForm').style.display = 'none';
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('queueForm').style.display = 'block';
+                    alert("Авторизация прошла успешно!");
+                } else {
+                    alert("Ошибка при авторизации.");
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка:", error);
+                alert("Произошла ошибка при авторизации.");
+            });
+        });
+
+        // Обработчик регистрации
+        document.getElementById('registerForm').addEventListener('submit', function(event) {
+            event.preventDefault(); // Остановить отправку формы
+
+            const reg_username = document.getElementById('reg_username').value;
+            const reg_password = document.getElementById('reg_password').value;
+            const reg_role = document.getElementById('reg_role').value;
+
+            // Отправка POST-запроса на сервер для регистрации
+            fetch('http://127.0.0.1:5000/api/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: reg_username, password: reg_password, role: reg_role })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message === "Пользователь создан успешно") {
+                    alert("Регистрация прошла успешно! Вы можете войти.");
+                    // Показываем форму логина
+                    document.getElementById('registerForm').style.display = 'none';
+                    document.getElementById('loginForm').style.display = 'block';
+                } else {
+                    alert("Ошибка при регистрации.");
+                }
+            })
+            .catch(error => {
+                console.error("Ошибка:", error);
+                alert("Произошла ошибка при регистрации.");
+            });
+        });
+
+        // Форма добавления талона в очередь
+        document.getElementById('queueForm').addEventListener('submit', function(event) {
+            event.preventDefault();  // Остановить отправку формы
+
+            const service = document.getElementById('service').value;
+            const token = getToken();  // Получаем JWT-токен из localStorage
+
+            if (!token) {
+                alert("Ошибка: Вы не авторизованы. Пожалуйста, войдите в систему.");
+                return;
+            }
+
+            // Отправка POST-запроса на сервер с JWT-токеном
+            fetch('http://127.0.0.1:5000/api/tickets', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + token  // Добавляем токен в заголовок
+                },
+                body: JSON.stringify({
+                    service: service
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);  // Показать сообщение об успехе
+                addTicketToQueue(data.ticket);  // Обновить таблицу с талонами
+            })
+            .catch(error => {
+                console.error('Ошибка:', error);
+            });
+        });
+
+        // Функция для добавления талона в таблицу
+        function addTicketToQueue(ticket) {
+            const table = document.getElementById('queueTable').getElementsByTagName('tbody')[0];
+
+            const row = table.insertRow();
+            row.insertCell(0).textContent = ticket.ticket_number;
+            row.insertCell(1).textContent = ticket.service_name;
+            row.insertCell(2).textContent = ticket.status;
+        }
+    </script>
+</body>
+</html>

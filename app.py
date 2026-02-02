@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 from flask_jwt_extended import JWTManager
 from flask_cors import CORS
 from config import Config
@@ -40,21 +40,11 @@ def create_app():
     def internal_error(error):
         return jsonify({'error': 'Внутренняя ошибка сервера'}), 500
     
-    # Корневой маршрут
+    # Корневой маршрут для отображения HTML-страницы
     @app.route('/')
     def index():
-        return jsonify({
-            'message': 'Система электронной очереди деканата',
-            'version': '1.0.0',
-            'endpoints': {
-                'auth': '/api/login, /api/register',
-                'tickets': '/api/tickets',
-                'operator': '/api/operator/*',
-                'admin': '/api/admin/*',
-                'display': '/api/display/*'
-            }
-        })
-    
+        return render_template('index.html')  # Рендерим HTML-шаблон
+
     return app
 
 if __name__ == '__main__':
