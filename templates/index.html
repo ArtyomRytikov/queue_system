@@ -1,190 +1,266 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Система электронной очереди</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Queue System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}?v={{ static_version }}">
 </head>
 <body>
-    <h1>Авторизация</h1>
-    <form id="loginForm">
-        <label for="username">Имя пользователя:</label>
-        <input type="text" id="username" name="username" required><br><br>
+    <div class="page-shell">
+        <header class="hero">
+            <div>
+                <p class="eyebrow">FastAPI Queue Platform</p>
+                <h1>Онлайн-запись и электронная очередь без ручного хаоса</h1>
+                <p class="hero-copy">
+                    Студенты записываются на недели вперед, оператор видит реальную очередь по окнам,
+                    а администратор управляет расписанием и услугами из одного интерфейса.
+                </p>
+            </div>
+            <div class="hero-badge">
+                <span>Живая запись</span>
+                <strong id="boardUpdatedLabel">Обновление...</strong>
+            </div>
+        </header>
 
-        <label for="password">Пароль:</label>
-        <input type="password" id="password" name="password" required><br><br>
+        <section class="panel live-board">
+            <div class="panel-head">
+                <div>
+                    <p class="eyebrow">Публичное табло</p>
+                    <h2>Что происходит сегодня</h2>
+                </div>
+                <button class="ghost-button" id="refreshBoardBtn" type="button">Обновить</button>
+            </div>
+            <div class="metrics" id="boardMetrics"></div>
+            <div class="board-layout">
+                <div>
+                    <h3>Окна приема</h3>
+                    <div id="windowBoard" class="window-board"></div>
+                </div>
+                <div>
+                    <h3>Ближайшие записи</h3>
+                    <div id="upcomingBoard" class="list-stack"></div>
+                </div>
+            </div>
+        </section>
 
-        <button type="submit" class="btn">Войти</button>
-    </form>
+        <section class="auth-grid" id="authSection">
+            <article class="panel">
+                <p class="eyebrow">Вход</p>
+                <h2>Вернуться в кабинет</h2>
+                <form id="loginForm" class="form-grid">
+                    <label>
+                        <span>Почта</span>
+                        <input type="email" name="email" placeholder="student@example.com" required>
+                    </label>
+                    <label>
+                        <span>Пароль</span>
+                        <input type="password" name="password" placeholder="Минимум 8 символов" required>
+                    </label>
+                    <button class="primary-button" type="submit">Войти</button>
+                </form>
+                <p class="hint">
+                    Тестовый админ: <code>admin@queue.local</code> / <code>admin12345</code><br>
+                    Тестовый оператор: <code>operator@queue.local</code> / <code>operator12345</code>
+                </p>
+            </article>
 
-    <h1>Регистрация</h1>
-    <form id="registerForm">
-        <label for="reg_username">Имя пользователя:</label>
-        <input type="text" id="reg_username" name="reg_username" required><br><br>
+            <article class="panel accent-panel">
+                <p class="eyebrow">Регистрация</p>
+                <h2>Создать нормальный студенческий аккаунт</h2>
+                <form id="registerForm" class="form-grid">
+                    <label>
+                        <span>ФИО</span>
+                        <input type="text" name="full_name" placeholder="Иванов Иван Иванович" required>
+                    </label>
+                    <label>
+                        <span>Почта</span>
+                        <input type="email" name="email" placeholder="student@example.com" required>
+                    </label>
+                    <label>
+                        <span>Пароль</span>
+                        <input type="password" name="password" placeholder="Минимум 8 символов" required>
+                    </label>
+                    <label>
+                        <span>Повтор пароля</span>
+                        <input type="password" name="password_repeat" placeholder="Повторите пароль" required>
+                    </label>
+                    <button class="primary-button warm-button" type="submit">Зарегистрироваться</button>
+                </form>
+            </article>
+        </section>
 
-        <label for="reg_password">Пароль:</label>
-        <input type="password" id="reg_password" name="reg_password" required><br><br>
+        <section class="dashboard hidden" id="dashboardSection">
+            <div class="panel userbar">
+                <div>
+                    <p class="eyebrow">Личный кабинет</p>
+                    <h2 id="userNameLabel">Пользователь</h2>
+                    <p id="userMetaLabel" class="muted"></p>
+                </div>
+                <div class="userbar-actions">
+                    <button class="ghost-button" id="refreshDashboardBtn" type="button">Обновить данные</button>
+                    <button class="ghost-button" id="logoutBtn" type="button">Выйти</button>
+                </div>
+            </div>
 
-        <label for="reg_role">Роль:</label>
-        <select id="reg_role" name="reg_role">
-            <option value="STUDENT">Студент</option>
-            <option value="OPERATOR">Оператор</option>
-            <option value="ADMIN">Администратор</option>
-        </select><br><br>
+            <section class="role-section hidden" id="studentSection">
+                <div class="split-layout">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Запись</p>
+                                <h2>Выберите услугу и неделю</h2>
+                            </div>
+                            <div class="week-nav">
+                                <button class="ghost-button" type="button" id="weekPrevBtn">Назад</button>
+                                <strong id="weekLabel">Неделя</strong>
+                                <button class="ghost-button" type="button" id="weekNextBtn">Вперед</button>
+                            </div>
+                        </div>
+                        <div id="serviceCards" class="service-grid"></div>
+                        <div id="availabilityGrid" class="availability-grid"></div>
+                    </article>
 
-        <button type="submit" class="btn">Зарегистрироваться</button>
-    </form>
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Мои записи</p>
+                                <h2>Активные и завершенные посещения</h2>
+                            </div>
+                        </div>
+                        <div id="studentAppointments" class="list-stack"></div>
+                    </article>
+                </div>
+            </section>
 
-    <h1>Добавить в очередь</h1>
-    <form id="queueForm" style="display:none;">
-        <label for="service">Выберите услугу:</label>
-        <select id="service" name="service">
-            <option value="1">Справка об обучении</option>
-            <option value="2">Академический отпуск</option>
-            <option value="3">Пересдача экзамена</option>
-            <option value="4">Консультация</option>
-        </select>
-        <br><br>
-        <button type="submit" class="btn">Добавить в очередь</button>
-    </form>
+            <section class="role-section hidden" id="operatorSection">
+                <div class="split-layout">
+                    <article class="panel">
+                        <div class="panel-head">
+                            <div>
+                                <p class="eyebrow">Оператор</p>
+                                <h2>Очередь по окну</h2>
+                            </div>
+                            <select id="operatorWindowSelect" class="window-select"></select>
+                        </div>
+                        <div id="operatorCurrentCard" class="call-card empty-state">Нет активного вызова</div>
+                        <div class="action-row">
+                            <button class="primary-button" id="nextAppointmentBtn" type="button">Вызвать следующего</button>
+                        </div>
+                        <div id="operatorQueueList" class="list-stack"></div>
+                    </article>
 
-    <h2>Список ожидающих в очереди:</h2>
-    <table id="queueTable">
-        <thead>
-            <tr>
-                <th>Номер талона</th>
-                <th>Услуга</th>
-                <th>Статус</th>
-            </tr>
-        </thead>
-        <tbody>
-            <!-- Данные будут добавляться сюда -->
-        </tbody>
-    </table>
+                    <article class="panel">
+                        <p class="eyebrow">Как работает</p>
+                        <h2>Живая очередь по записи</h2>
+                        <p class="muted">
+                            Сначала идут отмеченные как пришедшие студенты, затем остальные записи по времени.
+                            Внутри окна нельзя вызвать нового человека, пока не закрыт текущий прием.
+                        </p>
+                    </article>
+                </div>
+            </section>
 
-    <script>
-        // Функция для получения токена из localStorage
-        function getToken() {
-            return localStorage.getItem("jwt_token"); // Предполагаем, что токен хранится в localStorage
-        }
+            <section class="role-section hidden" id="adminSection">
+                <div class="split-layout">
+                    <article class="panel">
+                        <p class="eyebrow">Админ</p>
+                        <h2>Услуги и окна</h2>
+                        <form id="serviceForm" class="form-grid compact-form">
+                            <input type="hidden" name="id">
+                            <label>
+                                <span>Название услуги</span>
+                                <input type="text" name="name" required>
+                            </label>
+                            <label>
+                                <span>Описание</span>
+                                <textarea name="description" rows="3"></textarea>
+                            </label>
+                            <label>
+                                <span>Длительность, мин</span>
+                                <input type="number" name="duration_minutes" min="10" max="180" value="20" required>
+                            </label>
+                            <label>
+                                <span>Цвет</span>
+                                <input type="text" name="color" value="#2f6fed" required>
+                            </label>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="is_active" checked>
+                                <span>Услуга активна</span>
+                            </label>
+                            <button class="primary-button" type="submit">Сохранить услугу</button>
+                        </form>
+                        <div id="adminServicesList" class="list-stack"></div>
+                    </article>
 
-        // Обработчик логина
-        document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Остановить отправку формы
+                    <article class="panel">
+                        <h2>Окна и недельное расписание</h2>
+                        <form id="windowForm" class="form-grid compact-form">
+                            <input type="hidden" name="id">
+                            <label>
+                                <span>Название окна</span>
+                                <input type="text" name="name" required>
+                            </label>
+                            <label>
+                                <span>Локация</span>
+                                <input type="text" name="location">
+                            </label>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="is_active" checked>
+                                <span>Окно активно</span>
+                            </label>
+                            <button class="primary-button" type="submit">Сохранить окно</button>
+                        </form>
 
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+                        <form id="ruleForm" class="form-grid compact-form top-gap">
+                            <input type="hidden" name="id">
+                            <label>
+                                <span>Окно</span>
+                                <select name="window_id" required></select>
+                            </label>
+                            <label>
+                                <span>День недели</span>
+                                <select name="weekday" required>
+                                    <option value="0">Понедельник</option>
+                                    <option value="1">Вторник</option>
+                                    <option value="2">Среда</option>
+                                    <option value="3">Четверг</option>
+                                    <option value="4">Пятница</option>
+                                    <option value="5">Суббота</option>
+                                    <option value="6">Воскресенье</option>
+                                </select>
+                            </label>
+                            <label>
+                                <span>Начало</span>
+                                <input type="time" name="start_time" value="09:00" required>
+                            </label>
+                            <label>
+                                <span>Конец</span>
+                                <input type="time" name="end_time" value="17:00" required>
+                            </label>
+                            <label>
+                                <span>Шаг слотов, мин</span>
+                                <input type="number" name="step_minutes" value="30" min="10" max="120" required>
+                            </label>
+                            <label class="checkbox-row">
+                                <input type="checkbox" name="is_active" checked>
+                                <span>Правило активно</span>
+                            </label>
+                            <button class="primary-button warm-button" type="submit">Сохранить расписание</button>
+                        </form>
 
-            // Отправка POST-запроса на сервер для логина
-            fetch('/api/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username, password })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.access_token) {
-                    // Сохраняем токен в localStorage
-                    localStorage.setItem('jwt_token', data.access_token);
-                    console.log("Токен сохранен:", localStorage.getItem('jwt_token'));
+                        <div id="adminWindowsList" class="list-stack top-gap"></div>
+                        <div id="adminRulesList" class="list-stack top-gap"></div>
+                    </article>
+                </div>
+            </section>
+        </section>
+    </div>
 
-                    // Показываем форму добавления в очередь
-                    document.getElementById('loginForm').style.display = 'none';
-                    document.getElementById('registerForm').style.display = 'none';
-                    document.getElementById('queueForm').style.display = 'block';
-                    alert("Авторизация прошла успешно!");
-                } else {
-                    alert("Ошибка при авторизации.");
-                }
-            })
-            .catch(error => {
-                console.error("Ошибка:", error);
-                alert("Произошла ошибка при авторизации.");
-            });
-        });
-
-        // Обработчик регистрации
-        document.getElementById('registerForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // Остановить отправку формы
-
-            const reg_username = document.getElementById('reg_username').value;
-            const reg_password = document.getElementById('reg_password').value;
-            const reg_role = document.getElementById('reg_role').value;
-
-            // Отправка POST-запроса на сервер для регистрации
-            fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ username: reg_username, password: reg_password, role: reg_role })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.message === "Пользователь создан успешно") {
-                    alert("Регистрация прошла успешно! Вы можете войти.");
-                    // Показываем форму логина
-                    document.getElementById('registerForm').style.display = 'none';
-                    document.getElementById('loginForm').style.display = 'block';
-                } else {
-                    alert("Ошибка при регистрации.");
-                }
-            })
-            .catch(error => {
-                console.error("Ошибка:", error);
-                alert("Произошла ошибка при егистрации.");
-            });
-        });
-
-        // Форма добавления талона в очередь
-        document.getElementById('queueForm').addEventListener('submit', function(event) {
-            event.preventDefault();  // Остановить отправку формы
-
-            const service = document.getElementById('service').value;
-            const token = getToken();  // Получаем JWT-токен из localStorage
-
-            if (!token) {
-                alert("Ошибка: Вы не авторизованы. Пожалуйста, войдите в систему.");
-                return;
-            }
-
-            // Отправка POST-запроса на сервер с JWT-токеном
-            fetch('/api/tickets', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + token  // Добавляем токен в заголовок
-                },
-                body: JSON.stringify({
-                    service: service
-                })
-            })
-            .then(response => response.json().then(data => ({ ok: response.ok, data })))
-            .then(({ ok, data }) => {
-                if (!ok) {
-                    alert(data.error || "Ошибка при создании талона.");
-                    return;
-                }
-                alert(data.message || "Талон успешно создан.");
-                addTicketToQueue(data.ticket);  // Обновить таблицу с талонами
-            })
-            .catch(error => {
-                console.error('Ошибка:', error);
-            });
-        });
-
-        // Функция для добавления талона в таблицу
-        function addTicketToQueue(ticket) {
-            const table = document.getElementById('queueTable').getElementsByTagName('tbody')[0];
-
-            const row = table.insertRow();
-            row.insertCell(0).textContent = ticket.ticket_number;
-            row.insertCell(1).textContent = ticket.service_name;
-            row.insertCell(2).textContent = ticket.status;
-        }
-    </script>
+    <div id="toast" class="toast hidden"></div>
+    <script src="{{ url_for('static', path='app.js') }}?v={{ static_version }}"></script>
 </body>
 </html>
